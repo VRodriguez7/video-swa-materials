@@ -37,6 +37,7 @@ struct SpinnerView: View {
     let rotation: Angle
     let isCurrent: Bool
     let isCompleting: Bool
+      
 
     var body: some View {
       Capsule()
@@ -61,6 +62,7 @@ struct SpinnerView: View {
   @State var currentIndex = -1
   @State var completed = false
   @State var isVisible = true
+  @State var currentOffset = CGSize.zero
 
   let shootUp =
     AnyTransition.offset(x: 0, y: -1000)
@@ -78,11 +80,37 @@ struct SpinnerView: View {
             )
           }
         }
+        .offset(currentOffset)
+        .blur(radius: currentOffset == .zero ? 0: 10)
+        .gesture(
+        DragGesture()
+            .onChanged{gesture in currentOffset = gesture.translation
+            }
+            .onEnded { gesture in
+                if currentOffset.height > 150 {
+                  complete()
+                }
+
+                currentOffset = .zero
+              }
+        )
+        .animation(.easeInOut(duration: 1), value: currentOffset)
         .transition(shootUp)
         .onAppear(perform: animate)
       }
     }
   }
+    
+    func complete() {
+        guard !completed else { return }
+        completed = true
+        currentIndex = -1
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
+            withAnimation {
+                isVisible = false
+            }
+        }
+    }
   
   func animate() {
     var iteration = 0
@@ -93,17 +121,12 @@ struct SpinnerView: View {
       iteration += 1
       if iteration == 30 {
         timer.invalidate()
-        completed = true
-        currentIndex = -1
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
-          withAnimation {
-            isVisible = false
-          }
+        complete()
         }
       }
     }
   }
-}
+
 
 struct SpinnerView_Previews : PreviewProvider {
   static var previews: some View {
