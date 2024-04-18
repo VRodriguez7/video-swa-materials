@@ -60,11 +60,26 @@ struct ContentView: View {
       )
     ]
   }
-
+    
+    @State private var animationData = AnimationData.array[0]
+    
+    
   var body: some View {
     Circle()
       .scaleEffect(0.5)
-      .foregroundColor(.green)
+      .foregroundColor(animationData.color)
+      //Gives animation to the colors transation
+      .animation(.default, value: animationData)
+      //makes the ball move around
+      .offset(animationData.offset)
+      .padding()
+      .onAppear{
+          for (index, data) in AnimationData.array.enumerated().dropFirst() {
+              DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(index)) {
+                  animationData = data
+              }
+          }
+      }
   }
 }
 
